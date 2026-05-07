@@ -17,7 +17,7 @@ const koreanFont = Noto_Sans_KR({
 export const metadata: Metadata = {
   title: "Jaewoo Ann | Frontend Portfolio",
   description:
-    "A bilingual frontend portfolio with a motion-driven dark editorial layout inspired by a cinematic one-page portfolio.",
+    "A bilingual product-minded frontend portfolio with an Open Design inspired interface system.",
 };
 
 export default function RootLayout({

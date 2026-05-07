@@ -1,21 +1,9 @@
 "use client";
 
-import {
-  AnimatePresence,
-  motion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
-import {
-  BriefcaseBusiness,
-  Cpu,
-  House,
-  Mail,
-  UserRound,
-} from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FaJava } from "react-icons/fa6";
-import { FiCheck, FiCopy, FiMail, FiSend } from "react-icons/fi";
+import { FiCheck, FiMail, FiSend } from "react-icons/fi";
 import type { IconType } from "react-icons/lib";
 import {
   SiDocker,
@@ -45,14 +33,6 @@ import {
   type SkillIconKey,
 } from "@/data/portfolio";
 
-const iconBySection: Record<SectionId, typeof House> = {
-  home: House,
-  intro: UserRound,
-  skills: Cpu,
-  career: BriefcaseBusiness,
-  contact: Mail,
-};
-
 const skillIconMap: Record<SkillIconKey, IconType> = {
   nextjs: SiNextdotjs,
   react: SiReact,
@@ -70,21 +50,154 @@ const skillIconMap: Record<SkillIconKey, IconType> = {
   git: SiGit,
 };
 
-function scrollToSection(id: SectionId) {
-  document.getElementById(id)?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-}
+const skillColorMap: Record<SkillIconKey, string> = {
+  nextjs: "#111111",
+  react: "#61dafb",
+  reactnative: "#61dafb",
+  typescript: "#3178c6",
+  javascript: "#f7df1e",
+  nestjs: "#e0234e",
+  java: "#f89820",
+  spring: "#6db33f",
+  nodejs: "#68a063",
+  mongodb: "#47a248",
+  postgresql: "#4169e1",
+  mysql: "#4479a1",
+  docker: "#2496ed",
+  git: "#f05032",
+};
 
-function Panel({
+const identityCards: Record<
+  Locale,
+  Array<{ title: string; description: string }>
+> = {
+  en: [
+    {
+      title: "Product sense",
+      description:
+        "Turns ambiguous workflows into crisp product surfaces with copy and states close to real use.",
+    },
+    {
+      title: "Frontend depth",
+      description:
+        "Builds responsive, motion-aware interfaces with disciplined typography and component states.",
+    },
+    {
+      title: "AI fluency",
+      description:
+        "Designs agent-assisted operations and AI features where reliability matters more than spectacle.",
+    },
+  ],
+  ko: [
+    {
+      title: "제품 감각",
+      description:
+        "모호한 워크플로를 실제 사용에 가까운 명확한 제품 화면과 상태로 정리합니다.",
+    },
+    {
+      title: "프론트엔드 깊이",
+      description:
+        "타이포그래피, 컴포넌트 상태, 반응형 동작을 고려해 프로덕션 인터페이스를 구현합니다.",
+    },
+    {
+      title: "AI 활용 역량",
+      description:
+        "화려함보다 신뢰성이 중요한 에이전트 기반 운영과 AI 기능에 관심을 두고 있습니다.",
+    },
+  ],
+};
+
+const journeyCopy: Record<
+  Locale,
+  Array<{ title: string; description: string }>
+> = {
+  en: [
+    {
+      title: "Known work first.",
+      description:
+        "The portfolio leads with verified project work and leaves room for stronger case-study evidence later.",
+    },
+    {
+      title: "Operations over theatre.",
+      description:
+        "Interpreter Platform and Operations Admin are framed as practical product surfaces and workflows.",
+    },
+  ],
+  ko: [
+    {
+      title: "확인된 작업부터.",
+      description:
+        "검증된 프로젝트를 먼저 보여주고, 추후 더 깊은 케이스 스터디로 확장할 수 있게 둡니다.",
+    },
+    {
+      title: "보여주기보다 운영 도구.",
+      description:
+        "통역사 플랫폼과 운영 어드민을 실제 업무 흐름을 다루는 제품 화면으로 정리합니다.",
+    },
+  ],
+};
+
+function Shell({
   children,
   className = "",
 }: {
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={`glass-panel ${className}`.trim()}>{children}</div>;
+  return <div className={`od-shell ${className}`.trim()}>{children}</div>;
+}
+
+function Header({
+  locale,
+  activeSection,
+  onLocaleChange,
+}: {
+  locale: Locale;
+  activeSection: SectionId;
+  onLocaleChange: (locale: Locale) => void;
+}) {
+  const content = portfolioContent.en;
+
+  return (
+    <header className="od-topbar">
+      <Shell className="od-nav">
+        <a href="#home" className="od-mark" aria-label="Jaewoo Ann home">
+          <span className="od-mark-dot" />
+          <span>jaewoo.ann / portfolio</span>
+        </a>
+
+        <nav className="od-nav-links" aria-label="Primary navigation">
+          {content.nav.map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className={activeSection === item.id ? "is-active" : ""}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="od-nav-actions">
+          <div className="od-lang-toggle" aria-label="Language toggle">
+            {localeOptions.map((option) => (
+              <button
+                key={option.code}
+                type="button"
+                onClick={() => onLocaleChange(option.code)}
+                className={locale === option.code ? "is-active" : ""}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <a href="#contact" className="od-button">
+            Coffee chat
+          </a>
+        </div>
+      </Shell>
+    </header>
+  );
 }
 
 function HeroSection({
@@ -92,14 +205,6 @@ function HeroSection({
 }: {
   content: (typeof portfolioContent)[Locale];
 }) {
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  });
-  const y = useTransform(scrollYProgress, [0, 1], [0, -110]);
-  const opacity = useTransform(scrollYProgress, [0, 0.85], [1, 0.15]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.965]);
   const [roleIndex, setRoleIndex] = useState(0);
 
   useEffect(() => {
@@ -108,105 +213,85 @@ function HeroSection({
     }, 2800);
 
     return () => window.clearInterval(timer);
-  }, [content.hero.roles]);
-
-  const nameChars = Array.from(content.hero.name);
+  }, [content.hero.roles.length]);
 
   return (
-    <section
-      id="home"
-      ref={sectionRef}
-      className="relative flex min-h-screen items-center justify-center px-4"
-    >
-      <motion.div style={{ y, opacity, scale }} className="relative z-10 text-center">
-        <div className="overflow-visible py-2">
-          <h1 className="display-name">
-            {nameChars.map((char, index) => (
-              <motion.span
-                key={`${char}-${index}`}
-                initial={{ opacity: 0, y: 90, rotateX: -90 }}
-                animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                transition={{
-                  delay: 0.04 * index,
-                  duration: 0.72,
-                  ease: [0.175, 0.885, 0.32, 1.275],
-                }}
-                className="char inline-block"
-              >
-                {char === " " ? "\u00A0" : char}
-              </motion.span>
-            ))}
-          </h1>
-        </div>
-
-        <div className="relative mt-5 min-h-[42px] overflow-visible sm:min-h-[62px]">
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={content.hero.roles[roleIndex]}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.45, ease: "circOut" }}
-              className="hero-role"
-            >
-              {content.hero.roles[roleIndex]}
-            </motion.p>
-          </AnimatePresence>
-        </div>
-
+    <section id="home" className="od-hero">
+      <Shell className="od-hero-grid">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 0.8 }}
-          className="absolute left-1/2 top-[calc(100%+6rem)] flex -translate-x-1/2 flex-col items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-white/38"
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="od-hero-copy"
         >
-          <span className="scroll-mouse" aria-hidden="true">
-            <span className="scroll-mouse__wheel" />
-          </span>
-          <span>{content.hero.scrollHint}</span>
-          <span className="h-10 w-px animate-pulse bg-gradient-to-b from-white/0 via-white/40 to-white/0" />
+          <p className="od-eyebrow">AI-native product systems</p>
+          <h1 className="od-hero-title">
+            Jaewoo Ann builds
+            <br />
+            <span className="od-role-rotator">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={content.hero.roles[roleIndex]}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -18 }}
+                  transition={{ duration: 0.36, ease: "circOut" }}
+                >
+                  {content.hero.roles[roleIndex]}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+          </h1>
+          <p className="od-lede">
+            A technical product builder focused on clear interfaces, useful
+            automation, and the operating systems behind AI-enabled teams.
+          </p>
+          <div className="od-hero-actions">
+            <a href="#career" className="od-button">
+              View journey
+            </a>
+            <a href="#skills" className="od-button od-button-secondary">
+              Inspect stack
+            </a>
+          </div>
         </motion.div>
-      </motion.div>
+      </Shell>
     </section>
   );
 }
 
 function IntroSection({
   content,
+  locale,
 }: {
   content: (typeof portfolioContent)[Locale];
+  locale: Locale;
 }) {
   return (
-    <section
-      id="intro"
-      className="relative flex min-h-[80vh] flex-col items-center justify-center px-6 py-32"
-    >
-      <motion.div
-        initial={{ height: 0, opacity: 0 }}
-        whileInView={{ height: 132, opacity: 1 }}
-        viewport={{ once: true, margin: "-120px" }}
-        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-sky-400 to-transparent opacity-35"
-      />
+    <section id="intro" className="od-section">
+      <Shell>
+        <div className="od-section-head">
+          <div className="od-label">01 / identity</div>
+          <div>
+            <h2>{content.intro.title}</h2>
+            <p className="od-section-copy od-section-copy-strong">
+              {content.intro.description}
+            </p>
+          </div>
+        </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-120px" }}
-        transition={{ duration: 0.8 }}
-        className="mx-auto max-w-4xl text-center"
-      >
-        <p className="eyebrow">{content.intro.eyebrow}</p>
-        <h2 className="section-title mt-7">
-          {content.intro.title}
-          <br />
-          <span className="text-white/38">{content.intro.accent}</span>
-        </h2>
-        <p className="mt-8 text-lg font-medium text-white md:text-2xl">{content.intro.stack}</p>
-        <p className="section-copy mx-auto mt-4 max-w-3xl whitespace-pre-line">
-          {content.intro.description}
-        </p>
-      </motion.div>
+        <div className="od-identity-grid">
+          {identityCards[locale].map((card, index) => (
+            <article key={card.title} className="od-identity-card">
+              <span className="od-index">{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </Shell>
     </section>
   );
 }
@@ -221,91 +306,49 @@ function TechUniverseSection({
   const activeCategory = categories[activeCategoryIndex] ?? categories[0];
 
   return (
-    <section id="skills" className="section-shell pt-32">
-      <div className="text-center">
-        <h2 className="tech-title">{content.tech.title}</h2>
-        <p className="mt-5 text-base text-white/46">{content.tech.helper}</p>
-      </div>
-
-      <div className="tech-universe-shell">
-        <div className="tech-universe-content">
-          <div className="mt-4 flex flex-wrap justify-center gap-3">
-            {categories.map((category, index) => (
-              <button
-                key={category.label}
-                type="button"
-                onClick={() => setActiveCategoryIndex(index)}
-                className={`category-pill ${
-                  index === activeCategoryIndex
-                    ? "border-white/40 bg-white/10 text-white shadow-[0_0_18px_rgba(255,255,255,0.18)]"
-                    : "border-white/6 text-white/38 hover:border-white/12 hover:text-white/72"
-                }`}
-              >
-                {category.label}
-              </button>
-            ))}
+    <section id="skills" className="od-section">
+      <Shell>
+        <div className="od-section-head">
+          <div className="od-label">02 / stack</div>
+          <div>
+            <h2>Large primitives, small surface area.</h2>
+            <p className="od-section-copy">{content.tech.helper}</p>
           </div>
+        </div>
 
-          <div className="tech-skill-strip">
-            {activeCategory.skills.map((skill) => {
-              const Icon = skillIconMap[skill.icon];
+        <div className="od-category-row">
+          {categories.map((category, index) => (
+            <button
+              key={category.label}
+              type="button"
+              onClick={() => setActiveCategoryIndex(index)}
+              className={index === activeCategoryIndex ? "is-active" : ""}
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
 
-              return (
-                <div key={skill.name} className="tech-skill-orb">
-                  <Icon className={`tech-skill-orb__icon ${skill.iconClass}`} />
-                  <span className="tech-skill-orb__name">{skill.name}</span>
+        <div className="od-stack-grid" aria-label="Technology stack">
+          {activeCategory.skills.map((skill) => {
+            const Icon = skillIconMap[skill.icon];
+            const style = {
+              "--tech-color": skillColorMap[skill.icon],
+            } as React.CSSProperties;
+
+            return (
+              <article key={skill.name} className="od-tech-card" style={style}>
+                <Icon className="od-tech-icon" />
+                <div>
+                  <b>{skill.name}</b>
+                  <span>{activeCategory.label}</span>
                 </div>
-              );
-            })}
-          </div>
+              </article>
+            );
+          })}
         </div>
-      </div>
+      </Shell>
     </section>
-  );
-}
-
-function JourneyEntryPanel({ entry }: { entry: JourneyEntry }) {
-  return (
-    <Panel className="journey-panel h-full p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">{entry.period}</p>
-          <h3 className="mt-3 text-3xl font-semibold tracking-tight text-white">
-            {entry.company}
-          </h3>
-          <p className="mt-2 text-base text-white/54">{entry.role}</p>
-        </div>
-        <div
-          className={`h-14 w-14 rounded-full bg-gradient-to-br ${entry.tone} opacity-90 blur-[1px]`}
-        />
-      </div>
-
-      <p className="mt-8 max-w-xl text-lg leading-8 text-white/66">{entry.tagline}</p>
-
-      <div className="mt-8 space-y-5">
-        {entry.projects.map((project) => (
-          <div key={project.name} className="journey-project">
-            <h4 className="text-xl font-semibold tracking-tight text-white">{project.name}</h4>
-            <p className="mt-3 text-sm leading-7 text-white/64">{project.summary}</p>
-            <ul className="mt-5 space-y-3">
-              {project.highlights.map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm text-white/68">
-                  <span className={`h-1.5 w-1.5 rounded-full bg-gradient-to-r ${entry.tone}`} />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {project.stack.map((item) => (
-                <span key={item} className="chip chip--muted">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </Panel>
   );
 }
 
@@ -323,7 +366,7 @@ function flattenJourneySteps(entries: JourneyEntry[]): JourneyProjectStep[] {
   );
 }
 
-function JourneyProjectSpotlight({
+function ProjectCard({
   step,
   index,
   total,
@@ -335,91 +378,57 @@ function JourneyProjectSpotlight({
   const { entry, project } = step;
 
   return (
-    <Panel className="journey-panel journey-panel--spotlight h-full p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">{entry.period}</p>
-          <p className="mt-3 text-sm font-medium text-white/58">{entry.company}</p>
+    <motion.article
+      key={`${entry.company}-${project.name}`}
+      initial={{ opacity: 0, y: 28, rotateX: 4, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -22, rotateX: -3, scale: 0.98 }}
+      transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+      className="od-project-card"
+    >
+      <div>
+        <div className="od-project-top">
+          <span className="od-chip">{entry.company}</span>
+          <span className="od-chip">
+            {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+          </span>
         </div>
-        <span className="journey-step-badge">
-          {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
-        </span>
+        <h3>{project.name}</h3>
+        <p>{project.summary}</p>
       </div>
 
-      <div className="mt-8">
-        <h3 className="text-3xl font-semibold tracking-tight text-white">{project.name}</h3>
-        <p className="mt-3 text-base text-white/52">{entry.role}</p>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-white/68">{project.summary}</p>
+      <div>
+        <ul className="od-highlight-list">
+          {project.highlights.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        <div className="od-chip-row">
+          {project.stack.map((item) => (
+            <span key={item} className="od-chip">
+              {item}
+            </span>
+          ))}
+        </div>
       </div>
-
-      <ul className="mt-8 space-y-3">
-        {project.highlights.map((item) => (
-          <li key={item} className="flex items-center gap-3 text-sm text-white/68">
-            <span className={`h-1.5 w-1.5 rounded-full bg-gradient-to-r ${entry.tone}`} />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-8 flex flex-wrap gap-2">
-        {project.stack.map((item) => (
-          <span key={item} className="chip chip--muted">
-            {item}
-          </span>
-        ))}
-      </div>
-    </Panel>
+    </motion.article>
   );
 }
 
-function SingleCareerJourneySection({
+function CareerJourneySection({
   content,
-  entry,
+  locale,
 }: {
   content: (typeof portfolioContent)[Locale];
-  entry: JourneyEntry;
+  locale: Locale;
 }) {
-  return (
-    <section id="career" className="section-shell pt-32">
-      <div className="text-center">
-        <h2 className="journey-title text-[clamp(2.6rem,6vw,5.5rem)]">
-          {content.journey.title}
-          <br />
-          <span className={`bg-gradient-to-r ${entry.tone} bg-clip-text text-transparent`}>
-            {content.journey.accent}
-          </span>
-        </h2>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-120px" }}
-        transition={{ duration: 0.7 }}
-        className="mt-14"
-      >
-        <JourneyEntryPanel entry={entry} />
-      </motion.div>
-    </section>
-  );
-}
-
-function MultiCareerJourneySection({
-  content,
-  entries,
-}: {
-  content: (typeof portfolioContent)[Locale];
-  entries: JourneyEntry[];
-}) {
-  const steps = flattenJourneySteps(entries);
+  const steps = flattenJourneySteps(content.journey.entries);
   const sectionRef = useRef<HTMLElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
   const lastWheelAtRef = useRef(0);
-  const activeStep = steps[activeIndex] ?? steps[0]!;
-  const activeEntry = activeStep?.entry ?? entries[0];
-  const activeProject = activeStep.project;
-  const progressScale = steps.length <= 1 ? 1 : (activeIndex + 1) / steps.length;
+  const activeStep = steps[activeIndex] ?? steps[0];
+  const progressWidth = `${((activeIndex + 1) / Math.max(steps.length, 1)) * 100}%`;
 
   useEffect(() => {
     activeIndexRef.current = activeIndex;
@@ -427,7 +436,7 @@ function MultiCareerJourneySection({
 
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
-      if (window.innerWidth < 1024 || !sectionRef.current) {
+      if (window.innerWidth < 980 || !sectionRef.current || steps.length <= 1) {
         return;
       }
 
@@ -452,18 +461,16 @@ function MultiCareerJourneySection({
         event.preventDefault();
 
         const now = Date.now();
-        if (now - lastWheelAtRef.current < 650) {
+        if (now - lastWheelAtRef.current < 620) {
           return;
         }
 
         lastWheelAtRef.current = now;
-        setActiveIndex((prev) => {
-          if (direction > 0) {
-            return Math.min(steps.length - 1, prev + 1);
-          }
-
-          return Math.max(0, prev - 1);
-        });
+        setActiveIndex((prev) =>
+          direction > 0
+            ? Math.min(steps.length - 1, prev + 1)
+            : Math.max(0, prev - 1),
+        );
       }
     };
 
@@ -471,148 +478,89 @@ function MultiCareerJourneySection({
     return () => window.removeEventListener("wheel", handleWheel);
   }, [steps.length]);
 
-  return (
-    <>
-      <section
-        id="career"
-        ref={sectionRef}
-        className="relative hidden lg:block"
-        style={{ minHeight: "100vh" }}
-      >
-        <div className="sticky top-0 flex h-screen items-center">
-          <div className="mx-auto flex w-full max-w-7xl gap-10 px-6">
-            <div className="flex w-[38%] flex-col justify-center">
-              <h2 className="journey-title">
-                {content.journey.title}
-                <br />
-                <span
-                  className={`bg-gradient-to-r ${activeEntry.tone} bg-clip-text text-transparent`}
-                >
-                  {content.journey.accent}
-                </span>
-              </h2>
-
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${activeEntry.company}-${activeProject.name}-${activeIndex}`}
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -18 }}
-                  transition={{ duration: 0.35 }}
-                  className="mt-8 max-w-md"
-                >
-                  <p className="text-sm uppercase tracking-[0.26em] text-white/38">
-                    {activeEntry.period}
-                  </p>
-                  <p className="mt-4 text-2xl font-medium tracking-tight text-white">
-                    {activeEntry.company}
-                  </p>
-                  <p className="mt-2 text-base text-white/54">{activeEntry.role}</p>
-                  <p className="mt-6 text-3xl font-semibold tracking-tight text-white">
-                    {activeProject.name}
-                  </p>
-                  <p className="mt-4 max-w-md text-sm leading-7 text-white/58">
-                    {activeProject.summary}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-
-              <div className="journey-project-nav mt-8">
-                {steps.map((step, index) => {
-                  const isActive = index === activeIndex;
-
-                  return (
-                    <div
-                      key={`${step.entry.company}-${step.project.name}`}
-                      className={`journey-project-nav__item ${
-                        isActive ? "is-active" : ""
-                      }`}
-                    >
-                      <span className="journey-project-nav__index">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span>{step.project.name}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="relative flex w-[62%] items-center">
-              <div className="absolute left-5 top-0 h-full w-px bg-white/6" />
-              <motion.div
-                style={{ scaleY: progressScale }}
-                className="absolute left-5 top-0 h-full w-px origin-top bg-gradient-to-b from-sky-500 via-cyan-400 to-emerald-400"
-              />
-              <div className="relative ml-14 w-full">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`${activeEntry.company}-${activeStep.project.name}`}
-                    initial={{ opacity: 0, y: 26 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -26 }}
-                    transition={{ duration: 0.45 }}
-                  >
-                    <JourneyProjectSpotlight
-                      step={activeStep}
-                      index={activeIndex}
-                      total={steps.length}
-                    />
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-shell pt-32 lg:hidden">
-        <div className="text-center">
-          <h2 className="journey-title text-4xl">
-            {content.journey.title}
-            <br />
-            <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-300 bg-clip-text text-transparent">
-              {content.journey.accent}
-            </span>
-          </h2>
-        </div>
-
-        <div className="mt-12 space-y-5">
-          {entries.map((entry, index) => (
-            <motion.div
-              key={entry.company}
-              initial={{ opacity: 0, y: 26 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-120px" }}
-              transition={{ duration: 0.55, delay: index * 0.08 }}
-            >
-              <JourneyEntryPanel entry={entry} />
-            </motion.div>
-          ))}
-        </div>
-      </section>
-    </>
-  );
-}
-
-function CareerJourneySection({
-  content,
-}: {
-  content: (typeof portfolioContent)[Locale];
-}) {
-  const entries = content.journey.entries;
-  const entry = entries[0];
-  const projectCount = entries.reduce((count, item) => count + item.projects.length, 0);
-
-  if (!entry) {
+  if (!activeStep) {
     return null;
   }
 
-  if (projectCount <= 1) {
-    return <SingleCareerJourneySection content={content} entry={entry} />;
-  }
+  return (
+    <>
+      <section id="career" ref={sectionRef} className="od-journey od-journey-desktop">
+        <Shell className="od-journey-layout">
+          <div className="od-journey-stage">
+            <div>
+              <div className="od-label">03 / career journey</div>
+              <h2>
+                {content.journey.title}
+                <br />
+                {content.journey.accent}
+              </h2>
+              <p className="od-section-copy">{content.journey.entries[0]?.tagline}</p>
+            </div>
 
-  return <MultiCareerJourneySection content={content} entries={entries} />;
+            <div className="od-project-viewport" aria-live="polite">
+              <AnimatePresence mode="wait">
+                <ProjectCard
+                  key={`${activeStep.entry.company}-${activeStep.project.name}`}
+                  step={activeStep}
+                  index={activeIndex}
+                  total={steps.length}
+                />
+              </AnimatePresence>
+            </div>
+
+            <div className="od-journey-progress" aria-hidden="true">
+              <i style={{ width: progressWidth }} />
+            </div>
+          </div>
+
+          <div className="od-journey-copy">
+            {steps.map((step, index) => {
+              const copy = journeyCopy[locale][index] ?? {
+                title: step.project.name,
+                description: step.project.summary,
+              };
+
+              return (
+                <button
+                  key={`${step.entry.company}-${step.project.name}`}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className={`od-journey-step ${activeIndex === index ? "is-active" : ""}`}
+                >
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <strong>{copy.title}</strong>
+                  <small>{copy.description}</small>
+                </button>
+              );
+            })}
+          </div>
+        </Shell>
+      </section>
+
+      <section className="od-section od-journey-mobile">
+        <Shell>
+          <div className="od-section-head">
+            <div className="od-label">03 / career journey</div>
+            <h2>
+              {content.journey.title}
+              <br />
+              {content.journey.accent}
+            </h2>
+          </div>
+          <div className="od-mobile-projects">
+            {steps.map((step, index) => (
+              <ProjectCard
+                key={`${step.entry.company}-${step.project.name}`}
+                step={step}
+                index={index}
+                total={steps.length}
+              />
+            ))}
+          </div>
+        </Shell>
+      </section>
+    </>
+  );
 }
 
 function ContactSection({
@@ -653,165 +601,108 @@ function ContactSection({
       setIsSending(false);
       setIsSubmitted(true);
       setForm({ name: "", email: "", message: "" });
-
-      window.setTimeout(() => setIsSubmitted(false), 2800);
-    }, 700);
+      window.setTimeout(() => setIsSubmitted(false), 2600);
+    }, 650);
   };
 
   return (
-    <section
-      id="contact"
-      className="relative mx-auto flex min-h-[80vh] max-w-7xl items-center px-6 py-20"
-    >
-      <div className="grid w-full grid-cols-1 items-start gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] lg:gap-12">
-        <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-120px" }}
-          transition={{ duration: 0.8 }}
-          className="space-y-10"
-        >
-          <div>
-            <h2 className="contact-title">
-              {content.contact.title.line1}
-              <br />
-              {content.contact.title.line2}
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-white/62">
-              {content.contact.description}
-            </p>
+    <section id="contact" className="od-contact">
+      <Shell>
+        <div className="od-contact-panel">
+          <div className="od-contact-copy">
+            <div>
+              <div className="od-label">04 / coffee chat</div>
+              <h2>
+                {content.contact.title.line1}
+                <br />
+                {content.contact.title.line2}
+              </h2>
+              <p>{content.contact.description}</p>
+            </div>
+
+            <div className="od-link-grid">
+              <button type="button" onClick={handleCopy} className="od-link-card">
+                <span>{content.contact.emailLabel}</span>
+                <b>{content.contact.email}</b>
+                <small>{copied ? content.contact.copied : "Copy email"}</small>
+              </button>
+              {content.contact.socials.map((social) => {
+                const Icon = social.icon === "github" ? SiGithub : FiMail;
+
+                return (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target={social.href.startsWith("http") ? "_blank" : undefined}
+                    rel={social.href.startsWith("http") ? "noreferrer" : undefined}
+                    className="od-link-card"
+                  >
+                    <span>{social.label}</span>
+                    <b>
+                      <Icon size={18} /> {social.label}
+                    </b>
+                  </a>
+                );
+              })}
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="group relative inline-flex w-full max-w-xl cursor-pointer items-center gap-4 rounded-[1.7rem] border border-white/10 bg-white/[0.04] p-5 pr-14 text-left backdrop-blur-md transition-all duration-300 hover:border-sky-400/50 hover:bg-white/[0.07]"
-          >
-            <div className="rounded-full bg-sky-500/20 p-3 text-sky-300 transition-colors group-hover:bg-sky-500 group-hover:text-white">
-              <FiMail size={24} />
-            </div>
-
-            <div className="flex flex-col">
-              <span className="text-xs uppercase tracking-wider text-white/42">
-                {content.contact.emailLabel}
-              </span>
-              <span className="text-lg font-mono text-white">{content.contact.email}</span>
-            </div>
-
-            <div className="absolute right-5 text-white/42 transition-colors group-hover:text-white">
-              {copied ? <FiCheck size={20} className="text-green-400" /> : <FiCopy size={20} />}
-            </div>
-
-            {copied ? (
-              <motion.span
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-green-500 px-2 py-1 text-xs font-bold text-black"
-              >
-                {content.contact.copied}
-              </motion.span>
-            ) : null}
-          </button>
-
-          <div className="flex gap-6">
-            {content.contact.socials.map((social) => {
-              const Icon = social.icon === "github" ? SiGithub : FiMail;
-
-              return (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target={social.href.startsWith("http") ? "_blank" : undefined}
-                  rel={social.href.startsWith("http") ? "noreferrer" : undefined}
-                  className="contact-social"
-                  aria-label={social.label}
-                >
-                  <Icon size={24} />
-                </a>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-120px" }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          <form onSubmit={handleSubmit} className="contact-form-shell lg:ml-auto">
-            <div className="contact-form-glow" />
-
-            <div className="relative z-10 space-y-6">
-              <div className="contact-form-grid">
-                <div className="contact-field">
-                  <label className="contact-label">{content.contact.form.nameLabel}</label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, name: event.target.value }))
-                    }
-                    required
-                    className="contact-input"
-                    placeholder={content.contact.form.namePlaceholder}
-                  />
-                </div>
-
-                <div className="contact-field">
-                  <label className="contact-label">{content.contact.form.emailLabel}</label>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, email: event.target.value }))
-                    }
-                    required
-                    className="contact-input"
-                    placeholder={content.contact.form.emailPlaceholder}
-                  />
-                </div>
-              </div>
-
-              <div className="contact-field">
-                <label className="contact-label">{content.contact.form.messageLabel}</label>
-                <textarea
-                  rows={6}
-                  value={form.message}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, message: event.target.value }))
-                  }
-                  required
-                  className="contact-input resize-none"
-                  placeholder={content.contact.form.messagePlaceholder}
-                />
-              </div>
-
-              <div className="contact-form-footer">
-                <button
-                  type="submit"
-                  disabled={isSending || isSubmitted}
-                  className={`contact-submit ${
-                    isSubmitted ? "bg-green-500 text-black" : ""
-                  }`}
-                >
-                  {isSending ? (
-                    <span className="animate-pulse">{content.contact.form.sending}</span>
-                  ) : isSubmitted ? (
-                    <>
-                      <FiCheck size={20} /> {content.contact.form.success}
-                    </>
-                  ) : (
-                    <>
-                      <FiSend size={18} /> {content.contact.form.submit}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+          <form onSubmit={handleSubmit} className="od-contact-form">
+            <label>
+              <span>{content.contact.form.nameLabel}</span>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, name: event.target.value }))
+                }
+                required
+                placeholder={content.contact.form.namePlaceholder}
+              />
+            </label>
+            <label>
+              <span>{content.contact.form.emailLabel}</span>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, email: event.target.value }))
+                }
+                required
+                placeholder={content.contact.form.emailPlaceholder}
+              />
+            </label>
+            <label className="od-form-wide">
+              <span>{content.contact.form.messageLabel}</span>
+              <textarea
+                value={form.message}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, message: event.target.value }))
+                }
+                required
+                placeholder={content.contact.form.messagePlaceholder}
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={isSending || isSubmitted}
+              className="od-button od-contact-submit"
+            >
+              {isSending ? (
+                content.contact.form.sending
+              ) : isSubmitted ? (
+                <>
+                  <FiCheck size={18} /> {content.contact.form.success}
+                </>
+              ) : (
+                <>
+                  <FiSend size={17} /> {content.contact.form.submit}
+                </>
+              )}
+            </button>
           </form>
-        </motion.div>
-      </div>
+        </div>
+      </Shell>
     </section>
   );
 }
@@ -864,86 +755,27 @@ export function PortfolioPage() {
   }, []);
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-black text-white selection:bg-sky-500/30">
-      <div className="pointer-events-none fixed inset-0">
-        <div className="aurora-layer absolute inset-0 opacity-40" />
-        <div className="noise-layer absolute inset-0 opacity-[0.03]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black" />
-      </div>
-
-      <div className="fixed right-4 top-4 z-50 flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1 backdrop-blur-md md:right-6 md:top-6">
-        {localeOptions.map((option) => (
-          <button
-            key={option.code}
-            type="button"
-            onClick={() => setLocale(option.code)}
-            className={`relative rounded-full px-3 py-1.5 text-xs font-bold tracking-wider transition-all duration-300 ${
-              locale === option.code ? "text-white" : "text-white/34 hover:text-white/74"
-            }`}
-          >
-            {locale === option.code ? (
-              <motion.span
-                layoutId="locale-bg"
-                className="absolute inset-0 rounded-full border border-white/20 bg-white/10"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
-            ) : null}
-            <span className="relative z-10">{option.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="pointer-events-none fixed right-4 top-1/2 z-[999] hidden -translate-y-1/2 flex-col gap-5 lg:flex">
-        {sharedContent.nav.map((item) => {
-          const Icon = iconBySection[item.id];
-          const isActive = activeSection === item.id;
-
-          return (
-            <div key={item.id} className="group pointer-events-auto relative flex items-center justify-center">
-              <button
-                type="button"
-                onClick={() => scrollToSection(item.id)}
-                className={`nav-orb ${
-                  isActive
-                    ? "border-sky-400/80 bg-black/60 text-white shadow-[0_0_15px_rgba(56,189,248,0.35)]"
-                    : "border-white/10 bg-black/30 text-white"
-                }`}
-                aria-label={item.label}
-              >
-                <Icon size={16} />
-                <span className="absolute right-full mr-4 whitespace-nowrap rounded border border-white/10 bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
-                  {item.label}
-                </span>
-              </button>
-              {isActive ? (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0, x: -10 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  className="absolute left-full ml-3 h-1.5 w-1.5 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.9)]"
-                />
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="relative z-10 pb-28">
-        <HeroSection content={sharedContent} />
-        <div className="h-[14vh]" />
-        <IntroSection content={introContent} />
-        <div className="h-[16vh]" />
-        <TechUniverseSection content={sharedContent} />
-        <div className="h-[18vh]" />
-        <CareerJourneySection key={`career-${locale}`} content={localizedContent} />
-        <div className="h-[18vh]" />
-        <ContactSection key={`contact-${locale}`} content={localizedContent} />
-
-        <footer className="border-t border-white/5 py-10 text-center text-sm text-white/34">
-          <p>
-            © 2026 {sharedContent.hero.name}. {sharedContent.footer}
-          </p>
-        </footer>
-      </div>
+    <main className="od-page">
+      <Header
+        locale={locale}
+        activeSection={activeSection}
+        onLocaleChange={setLocale}
+      />
+      <HeroSection content={sharedContent} />
+      <IntroSection content={introContent} locale={locale} />
+      <TechUniverseSection content={sharedContent} />
+      <CareerJourneySection
+        key={`career-${locale}`}
+        content={localizedContent}
+        locale={locale}
+      />
+      <ContactSection key={`contact-${locale}`} content={localizedContent} />
+      <footer className="od-footer">
+        <Shell className="od-footer-line">
+          <span>© 2026 {sharedContent.hero.name}. Portfolio prototype.</span>
+          <span>{sharedContent.footer}</span>
+        </Shell>
+      </footer>
     </main>
   );
 }
